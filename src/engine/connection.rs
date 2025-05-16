@@ -12,7 +12,7 @@ use mysql::*;
 /// let db = DbConfig {
 ///     name: "rsql".to_string(),
 ///     host: "127.0.0.1".to_string(),
-///     user: "nate".to_string(),
+///     user: "donald".to_string(),
 ///     password: "123".to_string(),
 ///     port: 3306,
 /// };
@@ -42,30 +42,5 @@ impl DbConfig {
         Opts::try_from(url.as_ref())?;
         let pool = Pool::new(url.as_ref())?;
         return Ok(pool.get_conn()?);
-    }
-}
-
-/// TODO better test, we cannot be testing it like this xd If we
-/// continue like this, we'll have to hardcode the connection details
-/// into the test, which breaks shii. For now, this is fine, but it's
-/// not great. What i want is to test that we get the proper return
-/// type, which would include failures to connect without the test
-/// fucking failing.
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn conn_can() {
-        let db = DbConfig {
-            name: "rsql".to_string(),
-            host: "127.0.0.1".to_string(),
-            user: "nate".to_string(),
-            password: "123".to_string(),
-            port: 3306,
-        };
-
-        let result = db.connect();
-        assert!(result.is_ok(), "DB connection failed: {:?}", result);
     }
 }
