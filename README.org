@@ -1,0 +1,18 @@
+#+TITLE: RSQL
+#+AUTHOR: NateNateNate
+#+STARTUP: overview
+#+OPTIONS: num:nil
+
+SQL TUI written in crablang!
+
+* Note
+
+This project is unfinished, please maintain low expectations!
+
+* Commands
+
+*Connecting:*
+
+#+begin_src bash
+  rsql mysql --username user --db rsql --password 123 --host 127.0.0.1 --port 3306
+#+end_src
