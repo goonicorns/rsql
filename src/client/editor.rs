@@ -66,8 +66,6 @@ impl EditBatch {
 }
 
 /// Our editor state.
-///
-/// I'm not sure what else to write yet xd
 pub struct EditorState {
     pub buffer: Rope,
     pub cursor: Cursor,
@@ -118,9 +116,7 @@ pub fn map_key_event_to_command(key: KeyEvent) -> Option<EditorCommand> {
     }
 }
 
-/// Handles all things related to mutating the buffer and shii
-///
-/// TODO: This has gotten pretty complex, find ways to simplify it.
+/// Handles all things related to mutating the buffer and shii.
 impl EditorState {
     pub fn handle_buffer(&mut self, cmd: EditorCommand) {
         let (x, y) = self.cursor;
@@ -175,7 +171,31 @@ impl EditorState {
             EditorCommand::Redo => {
                 self.redo();
             }
-            // non-editing commands
+            EditorCommand::MoveLeft => {
+                if self.cursor.0 > 0 {
+                    self.cursor.0 -= 1;
+                }
+            }
+            EditorCommand::MoveRight => {
+                let line_len = self.buffer.line(self.cursor.1).len_chars();
+                if self.cursor.0 < line_len {
+                    self.cursor.0 += 1;
+                }
+            }
+            EditorCommand::MoveUp => {
+                if self.cursor.1 > 0 {
+                    self.cursor.1 -= 1;
+                    let new_line_len = self.buffer.line(self.cursor.1).len_chars();
+                    self.cursor.0 = self.cursor.0.min(new_line_len);
+                }
+            }
+            EditorCommand::MoveDown => {
+                if self.cursor.1 + 1 < self.buffer.len_lines() {
+                    self.cursor.1 += 1;
+                    let new_line_len = self.buffer.line(self.cursor.1).len_chars();
+                    self.cursor.0 = self.cursor.0.min(new_line_len);
+                }
+            }
             _ => {}
         }
     }

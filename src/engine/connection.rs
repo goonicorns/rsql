@@ -28,8 +28,7 @@ pub struct DbConfig {
 /// TODO Create a trait as we plan to support other SQL variants
 /// besides Mysql.
 impl DbConfig {
-    /// Returns the mysql connection. I'm not good at writing
-    /// documentation or comments, so that's about it :P
+    /// Returns the mysql connection.
     pub fn connect(&self) -> mysql::Result<PooledConn> {
         let url = format!(
             "mysql://{user}:{password}@{host}:{port}/{db_name}",

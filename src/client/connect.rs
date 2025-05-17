@@ -67,7 +67,7 @@ impl Args {
             port,
         };
         let conn = db.connect();
-        // @TODO perhaps look into the error messages retured by
+        // TODO look into the error messages retured by
         // MySqlError
         // clearer. https://docs.rs/mysql/latest/mysql/struct.MySqlError.html
         match conn {
