@@ -15,6 +15,8 @@ pub enum EditorCommand {
     MoveRight,
     MoveUp,
     MoveDown,
+    MoveBeginningLine,
+    MoveEndLine,
     Undo,
     Redo,
     SearchMode,
@@ -98,6 +100,19 @@ pub fn map_key_event_to_command(key: KeyEvent) -> Option<EditorCommand> {
         KeyCode::Up => Some(EditorCommand::MoveUp),
         KeyCode::Down => Some(EditorCommand::MoveDown),
 
+        KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::Undo)
+        }
+        KeyCode::Char('r') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::Redo)
+        }
+        KeyCode::Char('/') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::SearchMode)
+        }
+        KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::Quit)
+        }
+
         // Emacs-styled movement bindings
         KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(EditorCommand::MoveUp)
@@ -114,19 +129,13 @@ pub fn map_key_event_to_command(key: KeyEvent) -> Option<EditorCommand> {
         KeyCode::Char('m') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(EditorCommand::Newline)
         }
+        KeyCode::Char('a') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveBeginningLine)
+        }
+        KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveEndLine)
+        }
 
-        KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            Some(EditorCommand::Undo)
-        }
-        KeyCode::Char('r') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            Some(EditorCommand::Redo)
-        }
-        KeyCode::Char('/') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            Some(EditorCommand::SearchMode)
-        }
-        KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            Some(EditorCommand::Quit)
-        }
         // Anything else can be considered text the user wants to pass
         // to the editor.
         KeyCode::Char(c) if key.modifiers.is_empty() => Some(EditorCommand::InsertChar(c)),
@@ -212,6 +221,13 @@ impl EditorState {
                     self.cursor.1 += 1;
                     let new_line_len = self.buffer.line(self.cursor.1).len_chars();
                     self.cursor.0 = self.cursor.0.min(new_line_len);
+                }
+            }
+            EditorCommand::MoveBeginningLine => self.cursor.0 = 0,
+            EditorCommand::MoveEndLine => {
+                let line_len = self.buffer.line(self.cursor.1).len_chars();
+                if self.cursor.1 < self.buffer.len_lines() {
+                    self.cursor.0 = line_len;
                 }
             }
             _ => {}
