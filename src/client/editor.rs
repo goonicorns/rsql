@@ -15,10 +15,14 @@ pub enum EditorCommand {
     MoveRight,
     MoveUp,
     MoveDown,
+    MoveBeginningLine,
+    MoveEndLine,
     Undo,
     Redo,
     SearchMode,
     Quit,
+    Mark, // highlight, known as marking in emacs
+    KillToEndOfLine,
     InsertChar(char),
 }
 
@@ -73,6 +77,7 @@ pub struct EditorState {
     undo_stack: Vec<EditBatch>,
     redo_stack: Vec<EditBatch>,
     current_batch: EditBatch,
+    pub selected_line: Option<usize>,
 }
 
 impl Default for EditorState {
@@ -84,6 +89,7 @@ impl Default for EditorState {
             undo_stack: vec![],
             redo_stack: vec![],
             current_batch: EditBatch::new(),
+            selected_line: None,
         }
     }
 }
@@ -97,18 +103,48 @@ pub fn map_key_event_to_command(key: KeyEvent) -> Option<EditorCommand> {
         KeyCode::Right => Some(EditorCommand::MoveRight),
         KeyCode::Up => Some(EditorCommand::MoveUp),
         KeyCode::Down => Some(EditorCommand::MoveDown),
+
         KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(EditorCommand::Undo)
         }
         KeyCode::Char('r') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(EditorCommand::Redo)
         }
-        KeyCode::Char('/') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            Some(EditorCommand::SearchMode)
-        }
         KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(EditorCommand::Quit)
         }
+
+        // Emacs-styled movement bindings
+        KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveUp)
+        }
+        KeyCode::Char('n') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveDown)
+        }
+        KeyCode::Char('b') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveLeft)
+        }
+        KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveRight)
+        }
+        KeyCode::Char('m') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::Newline)
+        }
+        KeyCode::Char('a') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveBeginningLine)
+        }
+        KeyCode::Char('s') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::SearchMode)
+        }
+        KeyCode::Char('k') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::KillToEndOfLine)
+        }
+        KeyCode::Char(c)
+            if key.modifiers.contains(KeyModifiers::CONTROL) && (c == 'l' || c == ' ') =>
+        {
+            Some(EditorCommand::Mark)
+        }
+
         // Anything else can be considered text the user wants to pass
         // to the editor.
         KeyCode::Char(c) if key.modifiers.is_empty() => Some(EditorCommand::InsertChar(c)),
@@ -194,6 +230,39 @@ impl EditorState {
                     self.cursor.1 += 1;
                     let new_line_len = self.buffer.line(self.cursor.1).len_chars();
                     self.cursor.0 = self.cursor.0.min(new_line_len);
+                }
+            }
+            EditorCommand::MoveBeginningLine => self.cursor.0 = 0,
+            EditorCommand::MoveEndLine => {
+                let line_len = self.buffer.line(self.cursor.1).len_chars();
+                if self.cursor.1 < self.buffer.len_lines() {
+                    self.cursor.0 = line_len;
+                }
+            }
+            EditorCommand::Mark => {
+                self.selected_line = Some(self.cursor.1);
+            }
+            EditorCommand::KillToEndOfLine => {
+                let (x, y) = self.cursor;
+                let line_len = self.buffer.line(y).len_chars();
+
+                if x < line_len {
+                    let start = self.buffer.line_to_char(y) + x;
+                    let end = self.buffer.line_to_char(y) + line_len;
+
+                    let deleted = self.buffer.slice(start..end).to_string();
+                    self.buffer.remove(start..end);
+
+                    let edit = Edit {
+                        kind: EditKind::Delete {
+                            index: start,
+                            text: deleted,
+                        },
+                        before_cursor: self.cursor,
+                        after_cursor: self.cursor, // stays in same place
+                    };
+
+                    self.record_edit(edit);
                 }
             }
             _ => {}
