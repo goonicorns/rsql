@@ -53,11 +53,18 @@ fn render(frame: &mut Frame, editor: &EditorState) {
     let offset_y = editor.scroll.1;
 
     let visible_lines: Vec<Line> = (offset_y..offset_y + height)
-        .filter_map(|i| {
-            editor
+        .map(|i| {
+            let mut line = editor
                 .buffer
                 .get_line(i)
-                .map(|line| Line::from(line.to_string()))
+                .map(|l| Line::from(l.to_string()))
+                .unwrap_or_else(|| Line::from("".to_string()));
+
+            if Some(i) == editor.selected_line {
+                line = line.style(Style::default().bg(Color::Blue));
+            }
+
+            line
         })
         .collect();
 
