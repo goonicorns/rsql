@@ -44,9 +44,6 @@ fn draw(terminal: &mut DefaultTerminal, editor: &mut EditorState) -> color_eyre:
     }
 }
 
-/// Our editor is wrapped in Widget::Paragraph. This is what we use to
-/// render the "editor look" of our editor. Then, we just wrap it in a
-/// fucking block xd.
 fn render(frame: &mut Frame, editor: &EditorState) {
     let area = frame.area();
     let height = frame.area().height as usize;

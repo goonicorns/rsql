@@ -22,7 +22,7 @@ pub enum EditorCommand {
     SearchMode,
     Quit,
     Mark, // highlight, known as marking in emacs
-    DeleteMarkedLine,
+    KillToEndOfLine,
     InsertChar(char),
 }
 
@@ -136,6 +136,9 @@ pub fn map_key_event_to_command(key: KeyEvent) -> Option<EditorCommand> {
         KeyCode::Char('s') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(EditorCommand::SearchMode)
         }
+        KeyCode::Char('k') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::KillToEndOfLine)
+        }
         KeyCode::Char(c)
             if key.modifiers.contains(KeyModifiers::CONTROL) && (c == 'l' || c == ' ') =>
         {
@@ -239,7 +242,29 @@ impl EditorState {
             EditorCommand::Mark => {
                 self.selected_line = Some(self.cursor.1);
             }
-            EditorCommand::DeleteMarkedLine => {}
+            EditorCommand::KillToEndOfLine => {
+                let (x, y) = self.cursor;
+                let line_len = self.buffer.line(y).len_chars();
+
+                if x < line_len {
+                    let start = self.buffer.line_to_char(y) + x;
+                    let end = self.buffer.line_to_char(y) + line_len;
+
+                    let deleted = self.buffer.slice(start..end).to_string();
+                    self.buffer.remove(start..end);
+
+                    let edit = Edit {
+                        kind: EditKind::Delete {
+                            index: start,
+                            text: deleted,
+                        },
+                        before_cursor: self.cursor,
+                        after_cursor: self.cursor, // stays in same place
+                    };
+
+                    self.record_edit(edit);
+                }
+            }
             _ => {}
         }
     }
