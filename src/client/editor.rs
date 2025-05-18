@@ -97,6 +97,24 @@ pub fn map_key_event_to_command(key: KeyEvent) -> Option<EditorCommand> {
         KeyCode::Right => Some(EditorCommand::MoveRight),
         KeyCode::Up => Some(EditorCommand::MoveUp),
         KeyCode::Down => Some(EditorCommand::MoveDown),
+
+        // Emacs-styled movement bindings
+        KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveUp)
+        }
+        KeyCode::Char('n') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveDown)
+        }
+        KeyCode::Char('b') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveLeft)
+        }
+        KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::MoveRight)
+        }
+        KeyCode::Char('m') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::Newline)
+        }
+
         KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(EditorCommand::Undo)
         }
