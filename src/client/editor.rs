@@ -7,6 +7,8 @@ use std::time::{Duration, Instant};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ropey::Rope;
 
+use crate::engine::executor;
+
 #[derive(Debug)]
 pub enum EditorCommand {
     Newline,
@@ -24,6 +26,7 @@ pub enum EditorCommand {
     Mark, // highlight, known as marking in emacs
     KillToEndOfLine,
     InsertChar(char),
+    ExecuteBuffer,
 }
 
 /// The cursor represented as x and y.
@@ -113,7 +116,9 @@ pub fn map_key_event_to_command(key: KeyEvent) -> Option<EditorCommand> {
         KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(EditorCommand::Quit)
         }
-
+        KeyCode::Char('x') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(EditorCommand::ExecuteBuffer)
+        }
         // Emacs-styled movement bindings
         KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(EditorCommand::MoveUp)
@@ -267,6 +272,12 @@ impl EditorState {
 
                     self.record_edit(edit);
                 }
+            }
+            // TODO clear the buffer after we're done viewing the
+            // results with some kind of kbd.
+            EditorCommand::ExecuteBuffer => {
+                let sql = self.buffer.to_string();
+                executor::run_sql(sql);
             }
             _ => {}
         }
