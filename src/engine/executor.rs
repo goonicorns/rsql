@@ -3,3 +3,7 @@
 // information.
 
 use mysql::*;
+
+pub fn run_sql(sql: String) {
+    println!("{}\n", sql);
+}
