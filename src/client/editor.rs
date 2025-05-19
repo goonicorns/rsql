@@ -273,9 +273,11 @@ impl EditorState {
                     self.record_edit(edit);
                 }
             }
+            // TODO clear the buffer after we're done viewing the
+            // results with some kind of kbd.
             EditorCommand::ExecuteBuffer => {
                 let sql = self.buffer.to_string();
-                println!("Executing sql: \n{}\n", sql);
+                executor::run_sql(sql);
             }
             _ => {}
         }
